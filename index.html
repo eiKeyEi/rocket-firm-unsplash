@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<!-- Required meta tags -->
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		
+		<script src="https://kit.fontawesome.com/027b4b6444.js" crossorigin="anonymous"></script>
+		
+		<link href = "css/styles.css" rel = "stylesheet" type = "text/css" />
+		
+		<title></title>
+	</head>
+	<body>
+		<div id="app">
+			<div class="header">
+				<div class="container">
+					<div class="logo" @click="section = 0">
+						<img src="img/logo/logo.png" class="logo-img">
+						<span class="logo-name" v-if="size >= 768">ImageStock</span>
+					</div>
+					<div class="nav">
+						<transition name="icon">
+							<div class="nav-el" @mouseover="hover.search = true" @mouseleave="hover.search = false" @click="section = 1, window.scrollTo (0, 0)" v-if="section != 1 || scrollPos != 0">
+								<i class="fas fa-search nav-icon"></i>
+								<span class="nav-text" v-if="size >= 768">Поиск</span>
+								<div :class="hover.search ? 'hover-eff-white' : 'hover-eff'"></div>
+							</div>
+						</transition>
+						<div class="nav-el" @mouseover="hover.heart = true" @mouseleave="hover.heart = false" @click="section = 2">
+							<i class="fas fa-heart nav-icon"></i>
+							<span class="nav-text" v-if="size >= 768">Избранное</span>
+							<div :class="hover.heart ? 'hover-eff-white' : 'hover-eff'"></div>
+						</div>
+						<div class="nav-el" @mouseover="hover.history = true" @mouseleave="hover.history = false" @click="section = 3">
+							<i class="fas fa-history nav-icon"></i>
+							<span class="nav-text" v-if="size >= 768">История поиска</span>
+							<div :class="hover.history ? 'hover-eff-white' : 'hover-eff'"></div>
+						</div>
+					</div>
+				</div>
+				<transition name="slide">
+					<div class="search-menu" v-if="section == 1 && scrollPos == 0">
+						<div style="text-align: center">
+							<input placeholder="Поиск" class="searcher" @keyup.enter="makeSearch ()" v-model="query">
+						</div>
+						<div class="horizontal-line"></div>
+						<div class="requests" v-if="size >= 768">
+							<div class="request-1" v-for="search in tipicalSearches">{{ search }}</div>
+							<div class="query-decoration">
+								<div class="request-1" v-for="search in tipicalSearches" @click="query = search, makeSearch ()" style="color: transparent!important;">{{ search }}</div>
+							</div>
+						</div>
+						<div class="requests" v-else>
+							<div class="request-1" v-for="search in tipicalSearches" @click="query = search, makeSearch ()">{{ search }}</div>
+						</div>
+					</div>
+				</transition>
+				<transition name="slide">
+					<div class="search-menu" v-if="section == 3 && scrollPos == 0">
+						<div style="text-align: center">
+							<div class="searcher">Ваши запроосы</div>
+						</div>
+						<div class="horizontal-line"></div>
+						<div class="requests" v-if="size >= 768" style="flex-wrap: wrap;">
+							<div class="request-3" v-for="search in requests" @click="query = search, makeSearch ()">{{ search }}</div>
+						</div>
+						<div class="requests" v-else>
+							<div class="request-3" v-for="search in requests" @click="query = search, makeSearch ()">{{ search }}</div>
+						</div>
+					</div>
+				</transition>
+			</div>
+
+			<div class="main-body container" v-if="section != 2">
+				<div class="imgs">
+					<div class="col-4" v-for="i in 3">
+						<div v-for="photo, ind in photos" class="img-border" v-if="(ind + 1) % 3 == i % 3">
+							<img :src="photo.urls.full" class="img">
+							<div class="hover-img">
+								<div style="background-color: gray; width: 100%; height: 100%;">
+								</div>
+								<div class="img-owner">
+									<div class="owner-info">
+										<img :src="photo.user.profile_image.large" width="72" height="72" class="img-avatar">
+										<p class="img-name">{{ photo.user.name }}</p>
+										<p class="img-mail">{{ photo.user.username }}</p>
+									</div>
+									<div>
+										<span class="img-item">
+											<i class="fas fa-heart img-icon" @click="addLiked (photo)" :style="checkUserLikes (photo) ? 'color: red!important; opacity: 1!important;' : ''"></i>
+										</span>
+										<span class="img-item">
+											<i class="fas fa-expand-alt img-icon"></i>
+										</span>
+										<span class="img-item">
+											<i class="fas fa-download img-icon"></i>
+										</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="pagination">
+					<div :class="(page == 1 || totalPages == 0) ? 'arrow-btn-dis' : 'arrow-btn'" @click="(page != 1 && totalPages != 0) ? (page = 1, makeSearch ()) : ''">
+						<i class="fas fa-angle-double-left arrow"></i>
+					</div>
+					<div :class="(page == 1 || totalPages == 0) ? 'arrow-btn-dis' : 'arrow-btn'" @click="(page != 1 && totalPages != 0) ? (page--, makeSearch ()) : ''">
+						<i class="fas fa-angle-left arrow"></i>
+					</div>
+					<div :class="(page == totalPages || totalPages == 0) ? 'arrow-btn-dis' : 'arrow-btn'" @click="(page != totalPages && totalPages != 0) ? (page++, makeSearch ()) : ''">
+						<i class="fas fa-angle-right arrow"></i>
+					</div>
+					<div :class="(page == totalPages || totalPages == 0) ? 'arrow-btn-dis' : 'arrow-btn'" @click="(page != totalPages && totalPages != 0) ? (page = totalPages, makeSearch ()) : ''">
+						<i class="fas fa-angle-double-right arrow"></i>
+					</div>
+				</div>
+			</div>
+			<div class="main-body container" v-if="section == 2">
+				<div class="imgs">
+					<div class="col-4" v-for="i in 3">
+						<div v-for="photo, ind in likedByUser" class="img-border" v-if="(ind + 1) % 3 == i % 3">
+							<img :src="photo.urls.full" class="img">
+							<div class="hover-img">
+								<div style="background-color: gray; width: 100%; height: 100%;">
+								</div>
+								<div class="img-owner">
+									<div class="owner-info">
+										<img :src="photo.user.profile_image.large" width="72" height="72" class="img-avatar">
+										<p class="img-name">{{ photo.user.name }}</p>
+										<p class="img-mail">{{ photo.user.username }}</p>
+									</div>
+									<div>
+										<span class="img-item">
+											<i class="fas fa-heart img-icon" @click="addLiked (photo)" :style="checkUserLikes (photo) ? 'color: red!important; opacity: 1!important;' : ''"></i>
+										</span>
+										<span class="img-item">
+											<i class="fas fa-expand-alt img-icon"></i>
+										</span>
+										<span class="img-item">
+											<i class="fas fa-download img-icon"></i>
+										</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.2/axios.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+		<!-- <script src="js/vue.js"></script> -->
+		
+		<script>
+			var app = new Vue({
+				el: '#app',
+				data() {
+					return {
+						window: window,
+						size: '',
+						query: '',
+						info: null,
+						hover: {
+							search: false,
+							heart: false,
+							history: false
+						},
+						section: 0,
+						photos: [],
+						scrollPos: 0,
+						page: 1,
+						totalPages: 0,
+						tipicalSearches: [
+							'Wallpapers',
+							'Texture & Patterns',
+							'Nature',
+							'Current Events',
+							'Architecture',
+							'Business & Work',
+							'Film',
+							'Animals',
+							'Travel',
+							'Fashion',
+							'Food & Drink',
+							'Spirituality',
+							'Experimental',
+							'People',
+							'Health',
+							'Art & Culture'
+						],
+						requests: [],
+						likedByUser: []
+					}
+				},
+				mounted () {
+					var app = this;
+					window.addEventListener("resize", app.winSize);
+					window.addEventListener('scroll', function(e){
+						var scrollPosition = window.scrollY;
+						var winHeight = window.innerHeight;
+						var docHeight = document.documentElement.scrollHeight;
+						app.scrollPos = 100 * scrollPosition / (docHeight - winHeight);
+					})
+				},
+				methods: {
+					winSize () {
+						var app = this;
+						app.size = window.innerWidth;
+						return app.size;
+					},
+					makeSearch () {
+						var app = this;
+						app.toRequest (app.query);
+						app.photos = [];
+						axios
+							.get ('https://api.unsplash.com/search/photos?client_id=-Y7ucRdcKGdQAtSN1DynpGQMK_PsbIlva6X9g2vgd6A&query=' + app.query + '&page=' + app.page)
+							.then (function (resp) {
+								console.log(resp.data);
+								app.photos = resp.data.results;
+								app.totalPages = resp.data.total_pages;
+								if (app.totalPages == 0) {
+									app.page = 1;
+								}
+							})
+							.catch (function (resp) {
+								console.log(resp);
+							})
+					},
+					toRequest (query) {
+						var app = this;
+						if (!app.requests.includes (query)) {
+							app.requests.push (query);
+						}
+					},
+					addLiked (photo) {
+						if (app.likedByUser.includes (photo)) {
+							const index = app.likedByUser.indexOf(photo);
+							if (index > -1) {
+								app.likedByUser.splice(index, 1);
+							}
+						} else {
+							app.likedByUser.push (photo);
+						}
+						console.log (app.likedByUser);
+					},
+					checkUserLikes (photo) {
+						return app.likedByUser.includes (photo);
+					}
+				}
+			})
+		</script>
+	</body>
+</html>
